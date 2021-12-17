@@ -4,13 +4,44 @@ import '../components/components.dart';
 import '../models/models.dart';
 import '../api/mock_fooderlich_service.dart';
 
-class ExploreScreen extends StatelessWidget {
-  // 1
-  final mockService = MockFooderlichService();
-
-  ExploreScreen({Key? key}) : super(key: key);
+class ExploreScreen extends StatefulWidget {
+  const ExploreScreen({Key? key}) : super(key: key);
 
   @override
+  _ExploreScreen createState() => _ExploreScreen();
+}
+
+class _ExploreScreen extends State<ExploreScreen> {
+  // 1
+  late ScrollController _scrollController;
+  final mockService = MockFooderlichService();
+
+  void _scrollListener() {
+    if (_scrollController.offset >=
+            _scrollController.position.maxScrollExtent &&
+        !_scrollController.position.outOfRange) {
+      print('i am at the bottom');
+    }
+    if (_scrollController.offset <=
+            _scrollController.position.minScrollExtent &&
+        !_scrollController.position.outOfRange) {
+      print('i am at the bottom');
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_scrollListener);
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    _scrollController = ScrollController();
+    _scrollController.addListener(_scrollListener);
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     // 1
@@ -24,6 +55,7 @@ class ExploreScreen extends StatelessWidget {
           // 5
           return ListView(
             // 6
+            controller: _scrollController,
             scrollDirection: Axis.vertical,
             children: [
               // 7

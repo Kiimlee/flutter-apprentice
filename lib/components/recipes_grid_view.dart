@@ -15,6 +15,9 @@ class RecipesGridView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // 2
+
+    var width = MediaQuery.of(context).size.width;
+
     return Padding(
       padding: const EdgeInsets.only(
         left: 16,
@@ -22,12 +25,13 @@ class RecipesGridView extends StatelessWidget {
         top: 16,
       ),
       // 3
+      // ignore: lines_longer_than_80_chars
       child: GridView.builder(
         // 4
         itemCount: recipes.length,
         // 5
         gridDelegate:
-            const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2),
+            SliverGridDelegateWithMaxCrossAxisExtent(maxCrossAxisExtent: width),
         itemBuilder: (context, index) {
           // 6
           final simpleRecipe = recipes[index];
