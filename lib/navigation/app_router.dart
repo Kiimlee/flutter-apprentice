@@ -2,19 +2,15 @@ import 'package:flutter/material.dart';
 
 import '../models/models.dart';
 import '../screens/screens.dart';
+import 'app_link.dart';
 
-// 1
-class AppRouter extends RouterDelegate
+class AppRouter extends RouterDelegate<AppLink>
     with ChangeNotifier, PopNavigatorRouterDelegateMixin {
-  // 2
   @override
   final GlobalKey<NavigatorState> navigatorKey;
 
-  // 3
   final AppStateManager appStateManager;
-  // 4
   final GroceryManager groceryManager;
-  // 5
   final ProfileManager profileManager;
 
   AppRouter({
@@ -35,84 +31,129 @@ class AppRouter extends RouterDelegate
     super.dispose();
   }
 
-  // 6
   @override
   Widget build(BuildContext context) {
-    // 7
     return Navigator(
-      // 8
       key: navigatorKey,
       onPopPage: _handlePopPage,
-      // 9
       pages: [
-        if (!appStateManager.isInitialized) SplashScreen.page(),
-        if (appStateManager.isInitialized && !appStateManager.isLoggedIn)
+        if (!appStateManager.isInitialized) ...[
+          SplashScreen.page(),
+        ] else if (!appStateManager.isLoggedIn) ...[
           LoginScreen.page(),
-        if (appStateManager.isLoggedIn && !appStateManager.isOnboardingComplete)
+        ] else if (!appStateManager.isOnboardingComplete) ...[
           OnboardingScreen.page(),
-        if (appStateManager.isOnboardingComplete)
+        ] else ...[
           Home.page(appStateManager.getSelectedTab),
-// 1
-        if (groceryManager.isCreatingNewItem)
-// 2
-          GroceryItemScreen.page(
-            onCreate: (item) {
-              // 3
+          if (groceryManager.isCreatingNewItem)
+            GroceryItemScreen.page(onCreate: (item) {
               groceryManager.addItem(item);
-            },
-            onUpdate: (item, index) {
-              // 4 No update
-            },
-          ),
-// 1
-        if (groceryManager.selectedIndex != -1)
-          // 2
-          GroceryItemScreen.page(
-              item: groceryManager.selectedGroceryItem,
-              index: groceryManager.selectedIndex,
-              onUpdate: (item, index) {
-                // 3
-                groceryManager.updateItem(item, index);
-              },
-              onCreate: (_) {
-                // 4 No create
-              }),
-        if (profileManager.didSelectUser)
-          ProfileScreen.page(profileManager.getUser),
-        if (profileManager.didTapOnRaywenderlich) WebViewScreen.page(),
+            }, onUpdate: (item, index) {
+              // No update
+            }),
+          if (groceryManager.selectedIndex != -1)
+            GroceryItemScreen.page(
+                item: groceryManager.selectedGroceryItem,
+                index: groceryManager.selectedIndex,
+                onCreate: (_) {
+                  // No create
+                },
+                onUpdate: (item, index) {
+                  groceryManager.updateItem(item, index);
+                }),
+          if (profileManager.didSelectUser)
+            ProfileScreen.page(profileManager.getUser),
+          if (profileManager.didTapOnRaywenderlich) WebViewScreen.page(),
+        ]
       ],
     );
   }
 
-  bool _handlePopPage(
-      // 1
-      Route<dynamic> route,
-      // 2
-      result) {
-    // 3
+  bool _handlePopPage(Route<dynamic> route, result) {
     if (!route.didPop(result)) {
-      // 4
       return false;
     }
 
-    // 5
     if (route.settings.name == FooderlichPages.onboardingPath) {
       appStateManager.logout();
     }
+
     if (route.settings.name == FooderlichPages.groceryItemDetails) {
       groceryManager.groceryItemTapped(-1);
     }
+
     if (route.settings.name == FooderlichPages.profilePath) {
       profileManager.tapOnProfile(false);
     }
+
     if (route.settings.name == FooderlichPages.raywenderlich) {
       profileManager.tapOnRaywenderlich(false);
     }
-    // 6
+
     return true;
   }
 
-  // 10
+  AppLink getCurrentPath() {
+    // 1
+    if (!appStateManager.isLoggedIn) {
+      return AppLink(location: AppLink.loginPath);
+      // 2
+    } else if (!appStateManager.isOnboardingComplete) {
+      return AppLink(location: AppLink.onboardingPath);
+      // 3
+    } else if (profileManager.didSelectUser) {
+      return AppLink(location: AppLink.profilePath);
+      // 4
+    } else if (groceryManager.isCreatingNewItem) {
+      return AppLink(location: AppLink.itemPath);
+      // 5
+    } else if (groceryManager.selectedGroceryItem != null) {
+      final id = groceryManager.selectedGroceryItem?.id;
+      return AppLink(location: AppLink.itemPath, itemId: id);
+      // 6
+    } else {
+      return AppLink(
+          location: AppLink.homePath,
+          currentTab: appStateManager.getSelectedTab);
+    }
+  }
+
   @override
-  Future<void> setNewRoutePath(configuration) async => null;
+  AppLink get currentConfiguration => getCurrentPath();
+
+// 1
+  @override
+  Future<void> setNewRoutePath(AppLink newLink) async {
+    // 2
+    switch (newLink.location) {
+      // 3
+      case AppLink.profilePath:
+        profileManager.tapOnProfile(true);
+        break;
+      // 4
+      case AppLink.itemPath:
+        // 5
+        final itemId = newLink.itemId;
+        if (itemId != null) {
+          groceryManager.setSelectedGroceryItem(itemId);
+        } else {
+          // 6
+          groceryManager.createNewItem();
+        }
+        // 7
+        profileManager.tapOnProfile(false);
+        break;
+      // 8
+      case AppLink.homePath:
+        // 9
+        appStateManager.goToTab(newLink.currentTab ?? 0);
+        // 10
+        profileManager.tapOnProfile(false);
+        groceryManager.groceryItemTapped(-1);
+        break;
+      // 11
+      default:
+        break;
+    }
+  }
 }
