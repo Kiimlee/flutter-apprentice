@@ -3,17 +3,16 @@ import 'package:flutter/services.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
 
-import 'data/memory_repository.dart';
 import 'data/repository.dart';
 import 'network/recipe_service.dart';
 import 'network/service_interface.dart';
 import 'ui/main_screen.dart';
-import 'data/sqlite/sqlite_repository.dart';
+import 'data/moor/moor_repository.dart';
 
 Future<void> main() async {
   _setupLogging();
   WidgetsFlutterBinding.ensureInitialized();
-  final repository = SqliteRepository();
+  final repository = MoorRepository();
   await repository.init();
 
   runApp(MyApp(repository: repository));
