@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:logging/logging.dart';
+
 import 'package:provider/provider.dart';
 import 'data/memory_repository.dart';
-
-import 'ui/main_screen.dart';
 import 'mock_service/mock_service.dart';
+import 'ui/main_screen.dart';
+import 'data/repository.dart';
+import 'network/recipe_service.dart';
+import 'network/service_interface.dart';
 
 Future<void> main() async {
   _setupLogging();
@@ -27,21 +30,16 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
-      // 1
       providers: [
-        // 2
-        ChangeNotifierProvider<MemoryRepository>(
+        Provider<Repository>(
           lazy: false,
           create: (_) => MemoryRepository(),
         ),
-        // 3
-        Provider(
-          // 4
-          create: (_) => MockService()..create(),
+        Provider<ServiceInterface>(
+          create: (_) => RecipeService.create(),
           lazy: false,
         ),
       ],
-      // 5
       child: MaterialApp(
         title: 'Recipes',
         debugShowCheckedModeBanner: false,
