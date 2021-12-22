@@ -10,7 +10,6 @@ const String apiKey = 'f845de9306b6caf0c720603445e7145d';
 const String apiId = '05f2596f';
 const String apiUrl = 'https://api.edamam.com';
 
-// ignore: lines_longer_than_80_chars
 @ChopperApi()
 abstract class RecipeService extends ChopperService
     implements ServiceInterface {
